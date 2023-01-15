@@ -1,0 +1,2 @@
+(cram
+ (deps ../src/Driver.exe ../samples/peano.mp))

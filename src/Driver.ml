@@ -1,15 +1,13 @@
-open GT
 open Ostap
-   
+
 exception User_interrupt
-exception Error of Ostap.Msg.t
 
 let parse p s =
   Util.parse
     (object
        inherit Matcher.t s
        inherit Util.Lexers.decimal s
-       inherit Util.Lexers.string s             
+       inherit Util.Lexers.string s
        inherit Util.Lexers.lident PParser.Lexer.keywords s
        inherit Util.Lexers.uident PParser.Lexer.keywords s
        inherit Util.Lexers.skip [
@@ -21,8 +19,8 @@ let parse p s =
     )
     (ostap (p -EOF))
 
-let _ = 
-  Sys.signal Sys.sigint (Sys.Signal_handle (fun _ -> raise User_interrupt));
+let _ =
+  let _ = Sys.signal Sys.sigint (Sys.Signal_handle (fun _ -> raise User_interrupt)) in
   let env = new PEnv.c in
   let doCommand = function
   | `TraceOn     -> env#trace_on
@@ -33,29 +31,29 @@ let _ =
   | `Clear       -> env#clear
   | `Clause c    -> env#add c
   | `Show        -> env#show
-  | `Load f -> 
+  | `Load f ->
       (match parse PParser.spec (Util.read f) with
        | `Ok clauses  -> List.iter env#add clauses
        | `Fail m -> Printf.printf "Syntax error: %s\n" m
       )
-  | `Unify (x, y) -> 
-      Printf.printf "%s\n" 
+  | `Unify (x, y) ->
+      Printf.printf "%s\n"
 	(Ostap.Pretty.toString (Unify.pretty_subst (Unify.unify (Some Unify.empty) x y)))
   | `Query (`Body goal) ->
-      let vars = Ast.vars goal in 
+      let vars = Ast.vars goal in
       let rec iterate conf =
         match SLD.solve env conf with
         | `End -> Printf.printf "No (more) answers.\n%!"
         | `Answer (s, conf) ->
 	    (match vars with
 	     | [] -> Printf.printf "yes\n"
-	     | _  -> 
-		List.iter 
+	     | _  ->
+		List.iter
 		   (fun x ->
-		      Printf.printf "%s = %s\n" 
+		      Printf.printf "%s = %s\n"
                         x
-                        (Ostap.Pretty.toString (Ast.pretty_term (Unify.walk' s (`Var x)))) 
-                   ) 
+                        (Ostap.Pretty.toString (Ast.pretty_term (Unify.walk' s (`Var x))))
+                   )
 		   vars
             );
             Printf.printf "Continue (y/n)? ";
@@ -65,7 +63,7 @@ let _ =
   in
   while true do
     try
-      Printf.printf "> ";
+      Printf.printf " > ";
       match parse PParser.main (read_line ()) with
       | `Ok command -> doCommand command
       | `Fail m     -> Printf.printf "Syntax error: %s\n" m
@@ -73,4 +71,3 @@ let _ =
     | User_interrupt -> Printf.printf "Interrupted\n"
     | exc -> Printf.printf "%s\n" (Printexc.to_string exc)
   done
-

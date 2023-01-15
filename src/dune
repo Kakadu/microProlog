@@ -1,0 +1,38 @@
+(env
+ (_
+  (flags
+   (:standard
+    -rectypes
+    -w
+    -unused-var-strict
+    -w
+    -method-override
+    -warn-error
+    -partial-match
+    -warn-error
+    -instance-variable-override))))
+
+(executable
+ (package MicroProlog)
+ (public_name MicroProlog)
+ (name Driver)
+ (modules Ast PEnv PParser SLD Unify Driver)
+ (libraries ostap GT)
+ (preprocess
+  (action
+   (run %{project_root}/src/pp5+gt+plugins+ocanren+dump.exe %{input-file}))))
+
+(rule
+ (targets pp5+gt+plugins+ocanren+dump.exe)
+ (deps
+  ;%{project_root}/config/package-doc.cfg
+  (package GT)
+  (package OCanren))
+ (action
+  (run
+   mkcamlp5
+   -package
+   camlp5,camlp5.pa_o,camlp5.macro,camlp5.pr_dump,OCanren.syntax,ostap.syntax,GT.syntax,GT.syntax.all
+   -verbose
+   -o
+   %{targets})))
